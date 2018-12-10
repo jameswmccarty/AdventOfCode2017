@@ -34,6 +34,15 @@ How many steps away is the furthest he ever got from his starting position?
 
 """
 
+# use a counter instead of a list
+# of steps taken to improve speed
+dir_idx = { "n" : 0,
+			"s" : 1,
+			"ne": 2,
+			"nw": 3,
+			"se": 4,
+			"sw": 5 }
+
 def opposite(a):
 	if a == "ne":
 		return "sw"
@@ -77,6 +86,59 @@ def condense(a, b):
 		return "nw"
 	return None
 
+def build_count(arr, seq):
+	for step in seq:
+		arr[dir_idx[step]] += 1
+	return arr
+
+def distance2(counter):
+	last_sum = 0
+	while last_sum != sum(counter):
+		# Cancel N and S
+		m = min(counter[0],counter[1])
+		counter[0] -= m
+		counter[1] -= m
+		# Cancel NE and SW
+		m = min(counter[2],counter[5])
+		counter[2] -= m
+		counter[5] -= m
+		# Cancel NW and SE
+		m = min(counter[3],counter[4])
+		counter[3] -= m
+		counter[4] -= m
+		# Compress NE and S to SE
+		m = min(counter[2],counter[1])
+		counter[2] -= m
+		counter[1] -= m
+		counter[4] += m
+		# Compress NE and NW to N
+		m = min(counter[2],counter[3])
+		counter[2] -= m
+		counter[3] -= m
+		counter[0] += m
+		# Compress SE and SW to S
+		m = min(counter[4],counter[5])
+		counter[4] -= m
+		counter[5] -= m
+		counter[1] += m
+		# Compress NW and S to SW
+		m = min(counter[3],counter[1])
+		counter[3] -= m
+		counter[1] -= m
+		counter[5] += m
+		# Compress SE and N to NE
+		m = min(counter[4],counter[0])
+		counter[4] -= m
+		counter[0] -= m
+		counter[2] += m
+		# Compress SW and N to NW
+		m = min(counter[5],counter[0])
+		counter[5] -= m
+		counter[0] -= m
+		counter[3] += m
+		last_sum = sum(counter)
+	return counter
+	
 def distance(seq):
 	steps = []
 	path = seq
@@ -123,12 +185,22 @@ if __name__ == "__main__":
 
 	with open("day11_input", "r") as infile:
 		path = infile.read().strip()
-	path = path.split(",")
-	
+	path = path.split(",")	
+	dirs = [0] * 6
 	most = 0
-	t_path = []
-	for i in range(len(path)):
-		t_path.append(path[i])
-		t_path = distance(t_path)
-		most = max(most, len(t_path))
+	for step in path:
+		dirs = build_count(dirs, [step])
+		most = max(most,sum(distance2(dirs)))
 	print most
+	
+	"""
+	!!! Too Slow !!!
+	"""
+	
+	#most = 0
+	#t_path = []
+	#for i in range(len(path)):
+	#	t_path.append(path[i])
+	#	t_path = distance(t_path)
+	#	most = max(most, len(t_path))
+	#print most
