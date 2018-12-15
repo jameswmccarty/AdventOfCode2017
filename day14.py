@@ -55,6 +55,34 @@ How many regions are present given your key string?
 
 """
 
+grid = []
+
+class Block:
+
+	def __init__(self, x, y):
+		self.visited = False
+		self.x = x
+		self.y = y
+	
+	def explore(self, seen):
+		if self.visited == True:
+			return seen
+		seen.add(self)
+		self.visited = True
+		if self.x > 0:
+			if grid[self.y][self.x - 1] != None and not grid[self.y][self.x - 1].visited:
+				seen = seen.union(grid[self.y][self.x - 1].explore(seen))
+		if self.x < len(grid[self.y])-1:
+			if grid[self.y][self.x + 1] != None and not grid[self.y][self.x + 1].visited:
+				seen = seen.union(grid[self.y][self.x + 1].explore(seen))
+		if self.y > 0:
+			if grid[self.y-1][self.x] != None and not grid[self.y-1][self.x].visited:
+				seen = seen.union(grid[self.y-1][self.x].explore(seen))
+		if self.y < len(grid)-1:
+			if grid[self.y+1][self.x] != None and not grid[self.y+1][self.x].visited:
+				seen = seen.union(grid[self.y+1][self.x].explore(seen))
+		return seen		
+
 hex_bits = { 	'0' : 0,
 				'1' : 1,
 				'2' : 1,
@@ -72,6 +100,23 @@ hex_bits = { 	'0' : 0,
 				'e' : 3,
 				'f' : 4}
 
+hex_val = { 	'0' : 0,
+				'1' : 1,
+				'2' : 2,
+				'3' : 3,
+				'4' : 4,
+				'5' : 5,
+				'6' : 6,
+				'7' : 7,
+				'8' : 8,
+				'9' : 9,
+				'a' : 10,
+				'b' : 11,
+				'c' : 12,
+				'd' : 13,
+				'e' : 14,
+				'f' : 15}
+				
 def knot_hash(val):
 	list = []
 	for i in range(256):
@@ -112,8 +157,39 @@ def hash_gen(val):
 	
 def hash_sum(val):
 	return sum(hex_bits[x] for x in knot_hash(val))
+	
+def print_grid():
+	for row in grid:
+		line = ''
+		for item in row:
+			if item != None:
+				line += "#"
+			else:
+				line += "."
+		print line
+
+def populate_grid(val):
+	for i in range(128):
+		row = [None] * 128
+		hash = knot_hash(val + "-" + str(i))
+		for j in range(len(hash)):
+			for k in range(3,-1,-1):
+				if (1<<k) & hex_val[hash[j]] != 0:
+					row[j*4 + (3-k)] = Block(j*4 + (3-k),i)
+		grid.append(row)
 
 if __name__ == "__main__":
 
 	# Part 1 Solution
 	print hash_gen("jzgqcdpd")
+	#print hash_gen("flqrgnkx")
+	
+	# Part 2 Solution
+	blocks = []
+	populate_grid("jzgqcdpd")
+	#print_grid()
+	for i in range(128):
+		for j in range(128):
+			if grid[j][i] != None and not grid[j][i].visited:
+				blocks.append(grid[j][i].explore(set()))
+	print len(blocks)
